@@ -30,10 +30,16 @@ def edmonds_karp(graph: Dict[int, Dict[int, int]], source: int, sink: int) -> in
     for u in graph:
         residual_graph[u] = graph[u].copy()
         for v in graph[u]:
+            # Ensure every node is in the graph
             if v not in residual_graph:
                 residual_graph[v] = {}
+            # Ensure backward edge exists
             if u not in residual_graph[v]:
                 residual_graph[v][u] = 0
+    
+    # Ensure sink node is in the graph
+    if sink not in residual_graph:
+        residual_graph[sink] = {}
     
     # Initialize max flow
     max_flow = 0
@@ -82,7 +88,14 @@ def edmonds_karp(graph: Dict[int, Dict[int, int]], source: int, sink: int) -> in
         while v != source:
             u = parent[v]
             residual_graph[u][v] -= path_flow
+            
+            # Ensure the reverse edge exists before adding
+            if v not in residual_graph:
+                residual_graph[v] = {}
+            if u not in residual_graph[v]:
+                residual_graph[v][u] = 0
             residual_graph[v][u] += path_flow
+            
             v = u
         
         # Add path flow to max flow
