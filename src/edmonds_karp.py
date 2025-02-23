@@ -28,54 +28,49 @@ def edmonds_karp(graph: Dict[int, Dict[int, int]], source: int, sink: int) -> in
     # Create a residual graph (deep copy of the original graph)
     residual_graph = {}
     for u in graph:
-        residual_graph[u] = graph[u].copy()
-        for v in graph[u]:
-            # Ensure every node is in the graph
+        residual_graph[u] = {}
+        for v, capacity in graph[u].items():
+            residual_graph[u][v] = capacity
+            # Ensure backward edge exists for each node
             if v not in residual_graph:
                 residual_graph[v] = {}
-            # Ensure backward edge exists
             if u not in residual_graph[v]:
                 residual_graph[v][u] = 0
-    
-    # Ensure sink node is in the graph
-    if sink not in residual_graph:
-        residual_graph[sink] = {}
     
     # Initialize max flow
     max_flow = 0
     
-    # Find augmenting paths using BFS
+    # Repeat finding an augmenting path
     while True:
-        # Perform BFS to find an augmenting path
+        # Use BFS to find the shortest augmenting path
         parent = {}
         visited = set()
         queue = deque([source])
         visited.add(source)
         
-        # Find an augmenting path
         while queue:
             u = queue.popleft()
             
-            # Check all neighbors
+            # Explore neighbors
             for v, capacity in residual_graph[u].items():
                 if v not in visited and capacity > 0:
                     parent[v] = u
                     visited.add(v)
                     queue.append(v)
                     
-                    # If we've reached the sink, we found a path
+                    # Found path to sink
                     if v == sink:
                         break
             
-            # Early exit if sink is found
+            # If we've found a path to sink, stop searching
             if sink in visited:
                 break
         
-        # If no path to sink is found, we're done
+        # If no path to sink exists, max flow is found
         if sink not in visited:
             break
         
-        # Find the minimum residual capacity along the path
+        # Find bottleneck capacity (minimum residual capacity)
         path_flow = float('inf')
         v = sink
         while v != source:
@@ -83,19 +78,12 @@ def edmonds_karp(graph: Dict[int, Dict[int, int]], source: int, sink: int) -> in
             path_flow = min(path_flow, residual_graph[u][v])
             v = u
         
-        # Update residual capacities
+        # Update residual graph
         v = sink
         while v != source:
             u = parent[v]
             residual_graph[u][v] -= path_flow
-            
-            # Ensure the reverse edge exists before adding
-            if v not in residual_graph:
-                residual_graph[v] = {}
-            if u not in residual_graph[v]:
-                residual_graph[v][u] = 0
             residual_graph[v][u] += path_flow
-            
             v = u
         
         # Add path flow to max flow
