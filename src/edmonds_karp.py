@@ -27,25 +27,18 @@ def edmonds_karp(graph: Dict[int, Dict[int, int]], source: int, sink: int) -> in
     
     # Create a residual graph (deep copy of the original graph)
     residual_graph = {}
-    
-    # First, collect all unique nodes
-    all_nodes = set(graph.keys())
-    for node_list in graph.values():
-        all_nodes.update(node_list.keys())
-    
-    # Initialize graph for all nodes
-    for node in all_nodes:
-        residual_graph[node] = {}
-    
-    # Populate forward capacities
-    for u, edges in graph.items():
-        for v, capacity in edges.items():
+    for u in graph:
+        residual_graph[u] = {}
+        for v, capacity in graph[u].items():
             residual_graph[u][v] = capacity
-            # Ensure backward edges are initialized
-            if v not in residual_graph[u]:
-                residual_graph[u][v] = 0
-            if u not in residual_graph[v]:
-                residual_graph[v][u] = 0
+            # Ensure reverse routes exist
+            if v not in residual_graph:
+                residual_graph[v] = {}
+            residual_graph[v][u] = 0
+    
+    # Handle sink node if not already in graph
+    if sink not in residual_graph:
+        residual_graph[sink] = {}
     
     # Initialize max flow
     max_flow = 0
