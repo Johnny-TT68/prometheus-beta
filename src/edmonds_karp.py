@@ -25,71 +25,73 @@ def edmonds_karp(graph: Dict[int, Dict[int, int]], source: int, sink: int) -> in
     if source not in graph or sink not in graph:
         raise ValueError("Source or sink node not in graph")
     
-    # Create a residual graph (deep copy of the original graph)
+    # Initialize the residual graph
     residual_graph = {}
     for u in graph:
         residual_graph[u] = {}
         for v, capacity in graph[u].items():
+            # Add forward and backward edges
             residual_graph[u][v] = capacity
-            # Add nodes to ensure every node exists
             if v not in residual_graph:
                 residual_graph[v] = {}
+            if u not in residual_graph[v]:
+                residual_graph[v][u] = 0
     
-    # Initialize max flow
+    # Total flow tracking
     max_flow = 0
     
-    # Repeat finding an augmenting path
+    # While there is an augmenting path
     while True:
-        # Use BFS to find the shortest augmenting path
+        # BFS to find the shortest augmenting path
         parent = {}
+        flow_to_node = {}
         visited = set()
         queue = deque([source])
+        
+        # Initialize
+        flow_to_node[source] = float('inf')
         visited.add(source)
         
+        # BFS to find augmenting path
+        found_path = False
         while queue:
             u = queue.popleft()
             
             # Explore neighbors
             for v, capacity in residual_graph[u].items():
-                if v not in visited and capacity > 0:
+                if capacity > 0 and v not in visited:
+                    # Update flow
+                    flow_to_node[v] = min(flow_to_node.get(u, float('inf')), capacity)
                     parent[v] = u
-                    visited.add(v)
-                    queue.append(v)
                     
-                    # Found path to sink
+                    # Path found to sink
                     if v == sink:
+                        found_path = True
                         break
+                    
+                    # Add to queue and mark visited
+                    queue.append(v)
+                    visited.add(v)
             
-            # If we've found a path to sink, stop searching
-            if sink in visited:
+            if found_path:
                 break
         
-        # If no path to sink exists, max flow is found
-        if sink not in visited:
+        # If no path found, we are done
+        if not found_path:
             break
         
-        # Find bottleneck capacity (minimum residual capacity)
-        path_flow = float('inf')
+        # Trace the path and update residual graph
         v = sink
-        while v != source:
-            u = parent[v]
-            path_flow = min(path_flow, residual_graph[u][v])
-            v = u
+        path_flow = flow_to_node[sink]
         
-        # Update residual graph
-        v = sink
+        # Trace back and update residual graph
         while v != source:
             u = parent[v]
             residual_graph[u][v] -= path_flow
-            
-            # Dynamically add backward edge
-            if u not in residual_graph[v]:
-                residual_graph[v][u] = 0
             residual_graph[v][u] += path_flow
-            
             v = u
         
-        # Add path flow to max flow
+        # Update max flow
         max_flow += path_flow
     
     return max_flow
