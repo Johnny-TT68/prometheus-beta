@@ -31,14 +31,9 @@ def edmonds_karp(graph: Dict[int, Dict[int, int]], source: int, sink: int) -> in
         residual_graph[u] = {}
         for v, capacity in graph[u].items():
             residual_graph[u][v] = capacity
-            # Ensure reverse routes exist
+            # Add nodes to ensure every node exists
             if v not in residual_graph:
                 residual_graph[v] = {}
-            residual_graph[v][u] = 0
-    
-    # Handle sink node if not already in graph
-    if sink not in residual_graph:
-        residual_graph[sink] = {}
     
     # Initialize max flow
     max_flow = 0
@@ -86,7 +81,12 @@ def edmonds_karp(graph: Dict[int, Dict[int, int]], source: int, sink: int) -> in
         while v != source:
             u = parent[v]
             residual_graph[u][v] -= path_flow
+            
+            # Dynamically add backward edge
+            if u not in residual_graph[v]:
+                residual_graph[v][u] = 0
             residual_graph[v][u] += path_flow
+            
             v = u
         
         # Add path flow to max flow
